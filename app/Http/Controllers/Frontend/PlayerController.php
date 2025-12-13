@@ -179,22 +179,37 @@ class PlayerController extends FrontendController
                 ]);
             }
 
-            // ===== damage calculation (use snapshot stats) =====
-            $attackerStr = max(1, (int) $this->player->str);
-            $defenderVit = (int) ($snapshot['vit'] ?? $target->vit);
+            // ===== damage roll calculation =====
 
-            $baseDamage = $attackerStr;
-            $defense = floor($defenderVit / 2);
-            $damage = max(1, $baseDamage - $defense);
+            // base attack power
+            $basePower = (int) $this->player->final_str;
+            $flatAtk = (int) $this->player->final_atk;
 
-            // critical hit (use snapshot luc)
-            $luc = (int) ($this->player->luc ?? 0);
-            $critChance = min(30, $luc * 2);
+            // 隨機浮動（±20%）
+            $variance = rand(-20, 20) / 100;
+
+            // 血量影響（血越低，輸出越弱）
+            $hpRatio = $this->player->hp / max(1, $this->player->final_max_hp);
+            $hpFactor = max(0.5, $hpRatio); // 最低 50%
+
+            // raw damage before defense
+            $rawDamage = ($basePower + $flatAtk) * (1 + $variance) * $hpFactor;
+
+            // defense
+            $defense = floor($target->final_vit / 2) + (int) $target->final_def;
+
+            // final damage
+            $damage = max(1, (int) ($rawDamage - $defense));
+
+            // critical hit
+            $critChance = min(30, ($this->player->final_luc * 2) + (int) $this->player->final_crit);
             $isCrit = rand(1, 100) <= $critChance;
 
             if ($isCrit) {
-                $damage *= 2;
+                $damage = (int) ($damage * 2);
             }
+
+
 
             // ===== apply damage =====
             $hpBefore = $target->hp;

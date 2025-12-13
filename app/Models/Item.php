@@ -40,5 +40,21 @@ class Item extends BaseModel
         return $this->belongsTo(Player::class);
     }
 
+    public function getEffectiveValue(): array
+    {
+        $templateValue = $this->item_template?->value ?? [];
+        $itemValue = $this->value ?? [];
 
+        // 確保都是 array
+        if (!is_array($templateValue)) $templateValue = [];
+        if (!is_array($itemValue)) $itemValue = [];
+
+        // item.value 覆蓋 template.value
+        $merged = array_merge($templateValue, $itemValue);
+
+        // 只保留 numeric value
+        return array_filter($merged, function ($v) {
+            return is_numeric($v);
+        });
+    }
 }

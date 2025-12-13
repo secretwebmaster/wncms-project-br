@@ -442,6 +442,16 @@ namespace App\Models{
  * @property-read \App\Models\Game $game
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GameLog> $game_logs
  * @property-read int|null $game_logs_count
+ * @property-read int $final_atk
+ * @property-read int $final_crit
+ * @property-read int $final_def
+ * @property-read int $final_dex
+ * @property-read int $final_int
+ * @property-read int $final_luc
+ * @property-read int $final_max_hp
+ * @property-read int $final_max_mp
+ * @property-read int $final_str
+ * @property-read int $final_vit
  * @property-read mixed $thumbnail
  * @property-read mixed $website
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Item> $items
