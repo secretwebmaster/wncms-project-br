@@ -26,6 +26,9 @@ Route::prefix('player')->group(function () {
     Route::post('equip', [PlayerController::class, 'equip'])->name('players.equip');
     Route::post('unequip', [PlayerController::class, 'unequip'])->name('players.unequip');
     Route::post('eat', [PlayerController::class, 'eat'])->name('players.eat');
+
+    Route::get('profile/{id}', [PlayerController::class, 'editProfile'])->name('players.profile');
+    Route::post('profile/{id}', [PlayerController::class, 'updateProfile'])->name('players.profile.update');
 });
 
 Route::prefix('item')->group(function () {

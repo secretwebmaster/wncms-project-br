@@ -358,4 +358,48 @@ class PlayerController extends FrontendController
             ]);
         }
     }
+
+    public function editProfile($id)
+    {
+        $player = $this->modelClass::where('id', $id)->whereRelation('user', 'users.id', auth()->id())->first();
+        if (!$player) {
+            return redirect()->back();
+        }
+
+        return $this->view("{$this->theme}::players.profile", [
+            'player' => $player,
+        ]);
+    }
+
+    public function updateProfile(Request $request, $id)
+    {
+        // dd($request->all());
+
+        $player = $this->modelClass::where('id', $id)->whereRelation('user', 'users.id', auth()->id())->first();
+        if (!$player) {
+            return redirect()->back();
+        }
+
+        $request->validate([
+            'name' => 'nullable|string|max:50',
+            'thumbnail' => 'nullable|image|max:2048',
+        ]);
+
+        if ($request->name !== null) {
+            $player->update([
+                'name' => $request->name,
+            ]);
+        }
+
+        if ($request->hasFile('thumbnail')) {
+            $player
+                ->clearMediaCollection('player_thumbnail')
+                ->addMediaFromRequest('thumbnail')
+                ->toMediaCollection('player_thumbnail');
+        }
+
+        return redirect()->route('frontend.games.play', [
+            'game' => $player->game->id,
+        ])->with('success', __('wncms::word.successfully_updated'));
+    }
 }

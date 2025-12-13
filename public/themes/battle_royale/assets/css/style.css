@@ -61,6 +61,11 @@
     font-weight: bold;
 }
 
+.damage-number{
+    color: #ff6a74;
+    font-weight: bold;
+}
+
 .target-player-name {
     color: #ff1c1f;
     font-weight: bold;
