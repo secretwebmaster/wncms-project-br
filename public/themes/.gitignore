@@ -1,2 +1,4 @@
 *
 !.gitignore
+!battle_royale
+!battle_royale/**
