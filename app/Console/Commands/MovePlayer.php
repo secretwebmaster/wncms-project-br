@@ -57,7 +57,7 @@ class MovePlayer extends Command
         $gm = new GameManager($game, $player);
 
         // Record movement log
-        $gm->log($player, 'player_move', [
+        $gm->log($player, null, 'player_move', [
             'player_id' => $player->id,
             'from_x' => $originalX,
             'from_y' => $originalY,
@@ -81,7 +81,7 @@ class MovePlayer extends Command
             $this->info("Other players on tile: " . $others->count());
         }
 
-        $gm->log($player, 'player_teleport', [
+        $gm->log($player, null, 'player_teleport', [
             'player_id' => $player->id,
             'x' => $x,
             'y' => $y,

@@ -109,7 +109,8 @@ class GameController extends FrontendController
 
         $items = $game->items()->whereBetween('x', $this->mapRange['x'])->whereBetween('y', $this->mapRange['y'])->get();
         $players = $game->players()->where('id', '<>', $player->id)->get();
-        $game_logs = $game->game_logs()->where('player_id', $player->id)->orderBy('created_at', 'desc')->get();
+        $game_logs = $player->getGameLogs();
+        // dd($game_logs->first());
 
         //load map
         return $this->view($this->theme . "::games.play", [

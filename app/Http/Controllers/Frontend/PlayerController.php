@@ -40,7 +40,7 @@ class PlayerController extends FrontendController
         if ($otherPlayers->count()) {
             //pick one
             $randomPlayer = $otherPlayers->random(1)->first();
-            $this->gm->log($this->player, 'player_meet_player', [
+            $this->gm->log($this->player, null, 'player_meet_player', [
                 'player_id' => $this->player->id,
                 'other_player_id' => $randomPlayer->id,
             ]);
@@ -134,7 +134,7 @@ class PlayerController extends FrontendController
                         'z' => null,
                     ]);
 
-                    $log = $this->gm->log($this->player, 'player_found_item', [
+                    $log = $this->gm->log($this->player, null, 'player_found_item', [
                         'player_id' => $this->player->id,
                         'item_id' => $item->id,
                     ]);
@@ -204,10 +204,10 @@ class PlayerController extends FrontendController
             info("Attack result: " . print_r($logData, true));
 
             // log attack
-            $this->gm->log($this->player, 'player_attack_player', $logData);
+            $this->gm->log($this->player, null, 'player_attack_player', $logData);
 
             if ($result['killed']) {
-                $this->gm->log($this->player, 'player_killed_player', [
+                $this->gm->log($this->player, null, 'player_killed_player', [
                     'player_id'       => $this->player->id,
                     'other_player_id' => $target->id,
                 ]);
