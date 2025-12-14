@@ -185,7 +185,7 @@ class GameManager
         });
 
         // log
-        $this->log($player, 'player_equip_item', [
+        $this->log($player, null, 'player_equip_item', [
             'player_id' => $player->id,
             'item_id' => $item->id,
             'slot' => $slot,
@@ -208,7 +208,7 @@ class GameManager
             'is_equipped' => false,
         ]);
 
-        $this->log($player, 'player_unequip_item', [
+        $this->log($player, null, 'player_unequip_item', [
             'player_id' => $player->id,
             'item_id' => $item->id,
         ]);
@@ -216,31 +216,34 @@ class GameManager
         return true;
     }
 
-
     //! Record
-    public function log($player, $key, $data)
+    public function log(?Player $actor, ?Player $target, string $key, array $data)
     {
         $gameLogTemplate = GameLogTemplate::where('key', $key)->first();
-
-        info("Logging game log for player {$player->id} with key {$key}");
 
         if (!$gameLogTemplate) {
             info("GameLogTemplate not found for key: {$key}");
             return false;
         }
 
-        info($gameLogTemplate);
-
-        $gameLog = $player->game_logs()->create([
+        $gameLog = GameLog::create([
             'game_id' => $this->game->id,
+            'actor_player_id' => $actor?->id,
+            'target_player_id' => $target?->id,
             'game_log_template_id' => $gameLogTemplate->id,
             'data' => $data,
         ]);
 
-        info($gameLog);
+        info("GameLog created", [
+            'id' => $gameLog->id,
+            'actor_player_id' => $actor?->id,
+            'target_player_id' => $target?->id,
+            'key' => $key,
+        ]);
 
         return $gameLog;
     }
+
 
     public function renderGameLog(GameLog $gameLog, Player $viewer)
     {
