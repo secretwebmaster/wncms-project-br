@@ -105,6 +105,8 @@ class PlayerController extends FrontendController
             ]);
         }
 
+        // info($action);
+
         //update action
         $action->update([
             'status' => 'completed',
@@ -144,7 +146,6 @@ class PlayerController extends FrontendController
         }
 
         // attack
-        info($action);
         if ($action->type === 'battle' && $request->decision === 'attack') {
 
             $snapshot = $action->options['attack']['target'] ?? null;
@@ -246,14 +247,11 @@ class PlayerController extends FrontendController
             }
         }
 
-        //update stat
-
         //render view
         $mapView = $this->renderMap();
         $eventView = $this->renderEvent();
         $actionView = $this->renderAction();
         $inventoryView = $this->renderInventory();
-
 
         return response()->json([
             'status' => 'success',
@@ -269,16 +267,21 @@ class PlayerController extends FrontendController
 
     public function equip(Request $request)
     {
-        // info($request->all());
         if ($this->player->hp <= 0) {
             return response()->json([
                 'status' => 'fail',
                 'message' => 'user is dead',
             ]);
-        };
+        }
 
-        // info($this->player->hp);
-        $item = $this->player->items()->find($request->itemId);
+        $request->validate([
+            'itemId' => 'required|integer',
+        ]);
+
+        $item = $this->player->items()
+            ->with('item_template')
+            ->find($request->itemId);
+
         if (!$item) {
             return response()->json([
                 'status' => 'fail',
@@ -286,58 +289,41 @@ class PlayerController extends FrontendController
             ]);
         }
 
-        //unequip same type item
-        $this->player->items()->whereRelation('item_template', 'type', $item->item_template->type)->where('is_equipped', true)->update(['is_equipped' => false]);
-        $success = $item->update(['is_equipped' => true]);
-
-        if ($success) {
-            $log = $this->gm->log($this->player, 'player_equipped_item', [
-                'player_id' => $this->player->id,
-                'item_id' => $item->id,
+        try {
+            $this->gm->equipItem($this->player, $item);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'fail',
+                'message' => $e->getMessage(),
             ]);
         }
 
-        //render view
-        $mapView = $this->renderMap();
-        $eventView = $this->renderEvent();
-        $actionView = $this->renderAction();
-        $inventoryView = $this->renderInventory();
-
-        // info($inventoryView);
-
-        if ($success) {
-            return response()->json([
-                'status' => 'success',
-                'message' => __('wncms::word.item_equipped'),
-                'mapView' => $mapView,
-                'eventView' => $eventView,
-                'actionView' => $actionView,
-                'inventoryView' => $inventoryView,
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'failed',
-                'message' => __('wncms::word.item_not_equipped'),
-                'mapView' => $mapView,
-                'eventView' => $eventView,
-                'actionView' => $actionView,
-                'inventoryView' => $inventoryView,
-            ]);
-        }
+        // render view
+        return response()->json([
+            'status' => 'success',
+            'message' => __('wncms::word.item_equipped'),
+            'mapView' => $this->renderMap(),
+            'eventView' => $this->renderEvent(),
+            'actionView' => $this->renderAction(),
+            'inventoryView' => $this->renderInventory(),
+        ]);
     }
 
     public function unequip(Request $request)
     {
-        // info($request->all());
         if ($this->player->hp <= 0) {
             return response()->json([
                 'status' => 'fail',
                 'message' => 'user is dead',
             ]);
-        };
+        }
 
-        // info($this->player->hp);
+        $request->validate([
+            'itemId' => 'required|integer',
+        ]);
+
         $item = $this->player->items()->find($request->itemId);
+
         if (!$item) {
             return response()->json([
                 'status' => 'fail',
@@ -345,33 +331,23 @@ class PlayerController extends FrontendController
             ]);
         }
 
-        $success = $item->update(['is_equipped' => false]);
-
-
-        if ($success) {
-            $log = $this->gm->log($this->player, 'player_unequipped_item', [
-                'player_id' => $this->player->id,
-                'item_id' => $item->id,
-            ]);
-        }
-
-        //render view
-        $mapView = $this->renderMap();
-        $eventView = $this->renderEvent();
-        $actionView = $this->renderAction();
-        $inventoryView = $this->renderInventory();
-
-        if ($success) {
-
+        try {
+            $this->gm->unequipItem($this->player, $item);
+        } catch (\Throwable $e) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'item unequipped',
-                'mapView' => $mapView,
-                'eventView' => $eventView,
-                'actionView' => $actionView,
-                'inventoryView' => $inventoryView,
+                'status' => 'fail',
+                'message' => $e->getMessage(),
             ]);
         }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => __('wncms::word.item_unequipped'),
+            'mapView' => $this->renderMap(),
+            'eventView' => $this->renderEvent(),
+            'actionView' => $this->renderAction(),
+            'inventoryView' => $this->renderInventory(),
+        ]);
     }
 
     public function editProfile($id)

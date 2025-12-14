@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-
-use Wncms\Models\BaseModel;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Wncms\Models\BaseModel;
 use Wncms\Translatable\Traits\HasTranslations;
 
 class ItemTemplate extends BaseModel implements HasMedia
@@ -16,20 +15,6 @@ class ItemTemplate extends BaseModel implements HasMedia
     public static $modelKey = 'item_template';
 
     protected $guarded = [];
-
-    protected $equippable_types = [
-        'weapon',
-        'hand',
-        'foot',
-        'body',
-        'head',
-    ];
-    protected $consumable_types = [
-        'poison',
-        'food',
-        'bomb',
-        'material',
-    ];
 
     protected $casts = [
         'value' => 'array',
@@ -53,10 +38,18 @@ class ItemTemplate extends BaseModel implements HasMedia
 
     public const TYPES = [
         'weapon',
-        'comsumable',
-        'equipment',
+        'armor',
+        'consumable',
         'quest',
         'relic',
+    ];
+
+    public const SLOTS = [
+        'head',
+        'body',
+        'hand',
+        'foot',
+        'shield',
     ];
 
     public function registerMediaCollections(): void
@@ -66,7 +59,7 @@ class ItemTemplate extends BaseModel implements HasMedia
 
     /**
      * ----------------------------------------------------------------------------------------------------
-     * ! Relationship
+     * Relationship
      * ----------------------------------------------------------------------------------------------------
      */
     public function items()
@@ -76,7 +69,7 @@ class ItemTemplate extends BaseModel implements HasMedia
 
     /**
      * ----------------------------------------------------------------------------------------------------
-     * ! Attributes Accessor
+     * Attributes Accessor
      * ----------------------------------------------------------------------------------------------------
      */
     public function getThumbnailAttribute()
@@ -85,13 +78,17 @@ class ItemTemplate extends BaseModel implements HasMedia
         if ($media) return $media->getUrl();
     }
 
+    public function isEquippable(): bool
+    {
+        // v1 rule: equippable when type is weapon/armor and slot is valid
+        if (!in_array($this->type, ['weapon', 'armor'])) return false;
+        if (empty($this->slot)) return false;
 
-    public function is_equippable()
-    {
-        return in_array($this->type, $this->equippable_types);
+        return in_array($this->slot, self::SLOTS);
     }
-    public function is_consumable()
+
+    public function isConsumable(): bool
     {
-        return in_array($this->type, $this->consumable_types);
+        return $this->type === 'consumable';
     }
 }

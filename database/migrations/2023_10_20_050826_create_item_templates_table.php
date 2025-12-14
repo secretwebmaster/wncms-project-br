@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('status');
             $table->string('slug');
             $table->string('type');
+            $table->string('slot')->nullable();
             $table->string('name');
             $table->string('description')->nullable();
             $table->json('value')->nullable();

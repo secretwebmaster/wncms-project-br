@@ -34,7 +34,7 @@
                                     <li class="w-100 d-flex mb-1">
                                         <input type="checkbox" class="form-check me-1" name="game_item_ids[{{ $item->id }}]">
                                         <span title="{{ $item->item_template?->description }}">{{ $item->item_template?->name }}</span>
-                                        @if($item->item_template?->is_equippable())
+                                        @if($item->item_template?->isEquippable())
                                             @if($item->is_equipped)
                                             <span class="badge badge-danger ms-auto px-2 py-1"  data-game-item-id="{{ $item->id }}">@lang('wncms::word.equipped')</span>
                                             @endif

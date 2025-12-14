@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Wncms\Models\BaseModel;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+
 
 class Player extends BaseModel implements HasMedia
 {
@@ -127,7 +130,7 @@ class Player extends BaseModel implements HasMedia
         return $this->game->game_logs()
             ->where(function ($q) {
                 $q->where('player_id', $this->id)
-                  ->orWhere('type', 'public');
+                    ->orWhere('type', 'public');
             })
             ->orderBy('id', 'desc')
             ->limit(100)
@@ -150,16 +153,16 @@ class Player extends BaseModel implements HasMedia
 
         if ($type) {
             if (is_string($type)) {
-                $q->whereHas('item_template', fn ($q) => $q->where('type', $type));
+                $q->whereHas('item_template', fn($q) => $q->where('type', $type));
             } elseif (is_array($type)) {
-                $q->whereHas('item_template', fn ($q) => $q->whereIn('type', $type));
+                $q->whereHas('item_template', fn($q) => $q->whereIn('type', $type));
             }
         }
 
         if ($is_stackable !== 'all') {
             $q->whereHas(
                 'item_template',
-                fn ($q) => $q->where('is_stackable', (bool) $is_stackable)
+                fn($q) => $q->where('is_stackable', (bool) $is_stackable)
             );
         }
 
@@ -174,8 +177,8 @@ class Player extends BaseModel implements HasMedia
         return $this->items()
             ->whereHas('item', function ($q) use ($name) {
                 $q->where('name', $name)
-                  ->orWhere('slug', $name)
-                  ->orWhere('id', $name);
+                    ->orWhere('slug', $name)
+                    ->orWhere('id', $name);
             })
             ->first();
     }
@@ -189,8 +192,22 @@ class Player extends BaseModel implements HasMedia
     // 取得玩家目前已裝備的物品
     public function equippedItems()
     {
-        return $this->items()->where('is_equipped', true);
+        return $this->items()
+            ->where('is_equipped', true)
+            ->whereHas('item_template', function ($q) {
+                $q->whereNotNull('slot');
+            });
     }
+
+    public function equippedItemsInSlot(string $slot)
+    {
+        return $this->equippedItems()
+            ->whereHas('item_template', function ($q) use ($slot) {
+                $q->where('slot', $slot);
+            });
+    }
+
+
 
     // 聚合所有已裝備物品的數值加成（內部使用）
     protected function aggregateEquippedItemStats(): array
@@ -276,5 +293,52 @@ class Player extends BaseModel implements HasMedia
     public function getFinalCritAttribute(): int
     {
         return (int) ($this->aggregateEquippedItemStats()['crit'] ?? 0);
+    }
+
+    /**
+     * Equip an item for this player (v1 auto-replace by slot).
+     */
+    public function equipItem(Item $item): void
+    {
+        if ((int) $item->player_id !== (int) $this->id) {
+            throw new InvalidArgumentException('Item does not belong to this player.');
+        }
+
+        $template = $item->item_template;
+        if (!$template) {
+            throw new InvalidArgumentException('Item template not found.');
+        }
+
+        if (!$template->isEquippable()) {
+            throw new InvalidArgumentException('Item is not equippable.');
+        }
+
+        $slot = (string) $template->slot;
+
+        DB::transaction(function () use ($item, $slot) {
+            // Unequip all items in same slot first (v1 auto-replace)
+            $this->equippedItemsInSlot($slot)->update([
+                'is_equipped' => false,
+            ]);
+
+            // Equip target item
+            $item->update([
+                'is_equipped' => true,
+            ]);
+        });
+    }
+
+    /**
+     * Unequip an item for this player.
+     */
+    public function unequipItem(Item $item): void
+    {
+        if ((int) $item->player_id !== (int) $this->id) {
+            throw new InvalidArgumentException('Item does not belong to this player.');
+        }
+
+        $item->update([
+            'is_equipped' => false,
+        ]);
     }
 }

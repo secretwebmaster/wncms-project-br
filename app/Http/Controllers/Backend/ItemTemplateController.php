@@ -38,6 +38,7 @@ class ItemTemplateController extends BackendController
             'itemTemplate' => $itemTemplate,
             'item_options' => $item_options,
             'types' => $this->modelClass::TYPES,
+            'slots' => $this->modelClass::SLOTS,
         ]);
     }
 
@@ -50,11 +51,12 @@ class ItemTemplateController extends BackendController
                 $item_values[$row['key']] = $row['value'];
             }
         }
-        
+
         $itemTemplate = $this->modelClass::create([
             'status' => $request->status ?? 'active',
             'slug' => $request->slug ?? wncms()->getUniqueSlug('item_templates'),
             'type' => $request->type,
+            'slot' => $request->slot,
             'name' => $request->name,
             'description' => $request->description,
             'value' => $item_values,
@@ -92,6 +94,7 @@ class ItemTemplateController extends BackendController
             'itemTemplate' => $itemTemplate,
             'item_options' => $item_options,
             'types' => $this->modelClass::TYPES,
+            'slots' => $this->modelClass::SLOTS,
         ]);
     }
 
@@ -113,6 +116,7 @@ class ItemTemplateController extends BackendController
             'status' => $request->status ?? 'active',
             'slug' => $request->slug,
             'type' => $request->type,
+            'slot' => $request->slot,
             'name' => $request->name,
             'description' => $request->description,
             'value' => $item_values,

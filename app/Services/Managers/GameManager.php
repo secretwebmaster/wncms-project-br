@@ -8,6 +8,9 @@ use App\Models\GameLogTemplate;
 use App\Models\ItemTemplate;
 use App\Models\Player;
 use Illuminate\Support\Lottery;
+use App\Models\Item;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class GameManager
 {
@@ -156,6 +159,63 @@ class GameManager
             return false;
         }
     }
+
+    public function equipItem(Player $player, Item $item)
+    {
+        if ($item->player_id !== $player->id) {
+            throw new InvalidArgumentException('Item not owned by player');
+        }
+
+        $template = $item->item_template;
+        if (!$template || !$template->isEquippable()) {
+            throw new InvalidArgumentException('Item not equippable');
+        }
+
+        $slot = $template->slot;
+
+        DB::transaction(function () use ($player, $item, $slot) {
+            // auto replace: unequip same slot
+            $player->equippedItemsInSlot($slot)->update([
+                'is_equipped' => false,
+            ]);
+
+            $item->update([
+                'is_equipped' => true,
+            ]);
+        });
+
+        // log
+        $this->log($player, 'player_equip_item', [
+            'player_id' => $player->id,
+            'item_id' => $item->id,
+            'slot' => $slot,
+        ]);
+
+        return true;
+    }
+
+    public function unequipItem(Player $player, Item $item)
+    {
+        if ($item->player_id !== $player->id) {
+            throw new InvalidArgumentException('Item not owned by player');
+        }
+
+        if (!$item->is_equipped) {
+            return false;
+        }
+
+        $item->update([
+            'is_equipped' => false,
+        ]);
+
+        $this->log($player, 'player_unequip_item', [
+            'player_id' => $player->id,
+            'item_id' => $item->id,
+        ]);
+
+        return true;
+    }
+
 
     //! Record
     public function log($player, $key, $data)

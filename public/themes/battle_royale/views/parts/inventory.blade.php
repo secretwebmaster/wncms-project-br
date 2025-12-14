@@ -1,5 +1,6 @@
 {{-- 合成 --}}
-<button class="btn btn-sm btn-info w-100 mb-1 fw-bold" data-bs-toggle="modal" data-bs-target="#modal_combine_items">合成物品</button>
+<button class="btn btn-sm btn-info w-100 mb-1 fw-bold" data-bs-toggle="modal" data-bs-target="#modal_combine_items">
+    合成物品</button>
 <div id="modal_combine_items" class="modal fade">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -8,11 +9,11 @@
                 <div class="modal-header">
                     <h3 class="modal-title">請選擇需要合成的物品</h3>
                 </div>
-    
+
                 <div class="modal-body">
                     <div class="row">
-                        @foreach($player->getItems(null,'all')->sortBy('item.type') as $item)
-                            @if(!$item->is_equipped)
+                        @foreach ($player->getItems(null, 'all')->sortBy('item.type') as $item)
+                            @if (!$item->is_equipped)
                                 <div class="col-3 mb-1">
                                     <input class="form-check-input" type="checkbox" name="ingredients[]" value="{{ $item->id }}">
                                     <label class="form-check-label ms-3 text-nowrap fw-bold text-dark">
@@ -26,7 +27,7 @@
                         @endforeach
                     </div>
                 </div>
-    
+
                 <div class="modal-footer row">
                     <button type="button" class="btn btn-light fw-bold col" data-bs-dismiss="modal">關閉</button>
                     <button type="submit" form-id="game_items_combine" class="btn btn-info fw-bold col">合成</button>
@@ -46,10 +47,10 @@
                 <div class="modal-header">
                     <h3 class="modal-title">請選擇需要研磨的裝備及材料</h3>
                 </div>
-    
+
                 <div class="modal-body">
                     <div class="row">
-                        @foreach($player->getItems(['weapon','body','head','hand','foot'],'all')->sortBy('item.type') as $item)
+                        @foreach ($player->getItems(['weapon', 'body', 'head', 'hand', 'foot'], 'all')->sortBy('item.type') as $item)
                             <div class="col-3 mb-1 text-nowrap">
                                 <input class="form-check-input" type="radio" name="game_item_id" value="{{ $item->id }}">
                                 <label class="form-check-label text-nowrap fw-bold text-dark">
@@ -62,7 +63,7 @@
                         @endforeach
                     </div>
                 </div>
-    
+
                 <div class="modal-footer row">
                     <button type="button" class="btn btn-light fw-bold col" data-bs-dismiss="modal">關閉</button>
                     <button type="submit" form-id="game_items_upgrade" class="btn btn-info fw-bold col">合成</button>
@@ -71,6 +72,17 @@
         </div>
     </div>
 </div>
+
+{{-- 已裝備（Slot 視圖） --}}
+@php
+    $slotIcons = [
+        'head' => 'slot_head.png',
+        'body' => 'slot_body.png',
+        'hand' => 'slot_hand.png',
+        'foot' => 'slot_foot.png',
+        'shield' => 'slot_shield.png',
+    ];
+@endphp
 
 {{-- 物品欄 --}}
 <div class="card mb-3">
@@ -81,36 +93,91 @@
         </h3>
     </div>
 
+    {{-- 裝備 Slot --}}
+    @php
+        use App\Models\ItemTemplate;
+
+        $slotIcons = [
+            'head' => 'slot_head.png',
+            'body' => 'slot_body.png',
+            'hand' => 'slot_hand.png',
+            'foot' => 'slot_foot.png',
+            'shield' => 'slot_shield.png',
+        ];
+    @endphp
+
+    <div class="card-body px-4 py-2 border-bottom">
+
+        <div class="row row-cols-5 g-2">
+
+            @foreach (ItemTemplate::SLOTS as $slot)
+                @php
+                    $equippedItem = $player->equippedItemsInSlot($slot)->first();
+                    $emptyIcon = wncms()
+                        ->theme()
+                        ->asset($themeId, 'images/items/' . ($slotIcons[$slot] ?? 'slot_empty.png'));
+                @endphp
+
+                <div class="col" title="{{ strtoupper($slot) }}">
+                    <div class="position-relative border rounded bg-light d-flex align-items-center justify-content-center ratio ratio-1x1">
+
+                        @if ($equippedItem)
+                            <img src="{{ $equippedItem->item_template?->thumbnail }}"
+                                class="img-fluid p-1"
+                                alt="{{ $equippedItem->item_template?->name }}">
+
+                            {{-- unequip --}}
+                            {{-- <span class="position-absolute top-0 end-0 badge bg-danger btn-unequip-item"
+                                role="button"
+                                data-item-id="{{ $equippedItem->id }}">
+                                ×
+                            </span> --}}
+                        @else
+                            <img src="{{ $emptyIcon }}"
+                                class="img-fluid p-2 opacity-50"
+                                alt="{{ $slot }}">
+                        @endif
+
+                    </div>
+                </div>
+            @endforeach
+
+        </div>
+    </div>
+
     <div class="card-body px-4 py-2">
         <ul class="ps-0">
-            @foreach($player->getItems()->sortBy('item.type')->sortByDesc('is_equipped') as $item)
+            @foreach ($player->getItems()->sortBy('item.type')->sortByDesc('is_equipped') as $item)
                 <li class="w-100 d-flex mb-1">
                     <div class="symbol symbol-20px d-flex align-items-center position-relative">
                         <img class="me-1" src="{{ $item->item_template?->thumbnail }}" alt="">
-                        <span class="my-tooltip-trigger" title="{{ $item->item_template?->description }}">{{ $item->item_template?->name }} @if($item->level)<span class="text-success fw-bold">+{{ $item->level }}</span> @endif</span>
+                        <span class="my-tooltip-trigger" title="{{ $item->item_template?->description }}">{{ $item->item_template?->name }} @if ($item->level)
+                                <span class="text-success fw-bold">+{{ $item->level }}</span>
+                            @endif
+                        </span>
                     </div>
-                    @if($item->item_template?->is_equippable())
-                        @if($item->is_equipped)
-                        <span class="badge badge-danger ms-auto px-2 py-1 btn-unequip-item" role='button' data-item-id="{{ $item->id }}">@lang('wncms::word.unequip')</span>
+                    @if ($item->item_template?->isEquippable())
+                        @if ($item->is_equipped)
+                            <span class="badge badge-danger ms-auto px-2 py-1 btn-unequip-item" role='button' data-item-id="{{ $item->id }}">@lang('wncms::word.unequip')</span>
                         @else
-                        <span class="badge badge-info ms-auto px-2 py-1 btn-equip-item" role='button' data-item-id="{{ $item->id }}">@lang('wncms::word.equip')</span>
+                            <span class="badge badge-info ms-auto px-2 py-1 btn-equip-item" role='button' data-item-id="{{ $item->id }}">@lang('wncms::word.equip')</span>
                         @endif
                     @endif
                 </li>
             @endforeach
         </ul>
     </div>
-    
+
     {{-- 可堆疊 --}}
     <div class="card-body px-4 py-2">
         <ul class="ps-0">
-            @foreach($player->getItems(null,true,true) as  $item_name => $grouped_items)
+            @foreach ($player->getItems(null, true, true) as $item_name => $grouped_items)
                 <li class="w-100 d-flex mb-1">
                     <div class="symbol symbol-20px d-flex align-items-center">
                         <img class="me-1" src="{{ $grouped_items->first()->item->thumbnail }}" alt="">
                         <span>{{ $item_name }} ({{ $grouped_items->count() }})</span>
                     </div>
-                    @if($grouped_items->first()->item->type == 'food')
+                    @if ($grouped_items->first()->item->type == 'food')
                         <span class="badge badge-info ms-auto px-2 py-1 btn-eat-item" role='button' data-item-id="{{ $grouped_items->first()->id }}">@lang('wncms::word.use')</span>
                     @endif
                 </li>
