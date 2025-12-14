@@ -126,6 +126,8 @@ namespace App\Models{
  * @property array<array-key, mixed> $data
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $actor_player_id
+ * @property int|null $target_player_id
  * @property-read \App\Models\Game $game
  * @property-read \App\Models\GameLogTemplate|null $game_log_template
  * @property-read mixed $website
@@ -138,12 +140,14 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereActorPlayerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereData($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereGameId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereGameLogTemplateId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog wherePlayerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereTargetPlayerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog withAllTags(\ArrayAccess|\Wncms\Tags\Tag|array|string $tags, ?string $type = null)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLog withAllTagsOfAnyType($tags)
@@ -168,6 +172,8 @@ namespace App\Models{
  * @property-read int|null $tags_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Translatable\Models\Translation> $translations
  * @property-read int|null $translations_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GameLogTemplateVariant> $variants
+ * @property-read int|null $variants_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Website> $websites
  * @property-read int|null $websites_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplate forWebsite(?int $websiteId = null)
@@ -188,6 +194,49 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplate withoutTags(\ArrayAccess|\Wncms\Tags\Tag|array|string $tags, ?string $type = null)
  */
 	class GameLogTemplate extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property int $game_log_template_id
+ * @property string $variant_key
+ * @property int $priority
+ * @property array<array-key, mixed>|null $conditions
+ * @property bool $is_active
+ * @property string $content
+ * @property string|null $remark
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read mixed $website
+ * @property \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Tag> $tags
+ * @property-read int|null $tags_count
+ * @property-read \App\Models\GameLogTemplate|null $template
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Translatable\Models\Translation> $translations
+ * @property-read int|null $translations_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Website> $websites
+ * @property-read int|null $websites_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant forWebsite(?int $websiteId = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereConditions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereContent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereGameLogTemplateId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant wherePriority($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereRemark($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant whereVariantKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant withAllTags(\ArrayAccess|\Wncms\Tags\Tag|array|string $tags, ?string $type = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant withAllTagsOfAnyType($tags)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant withAnyTags(\ArrayAccess|\Wncms\Tags\Tag|array|string $tags, ?string $type = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant withAnyTagsOfAnyType($tags)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameLogTemplateVariant withoutTags(\ArrayAccess|\Wncms\Tags\Tag|array|string $tags, ?string $type = null)
+ */
+	class GameLogTemplateVariant extends \Eloquent {}
 }
 
 namespace App\Models{
@@ -243,6 +292,7 @@ namespace App\Models{
  * @property string $status
  * @property string $slug
  * @property string $type
+ * @property string|null $slot
  * @property string $name
  * @property string|null $description
  * @property array<array-key, mixed>|null $value
@@ -272,6 +322,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereIsStackable($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereRemark($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereSlot($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ItemTemplate whereType($value)

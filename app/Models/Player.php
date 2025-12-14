@@ -125,17 +125,15 @@ class Player extends BaseModel implements HasMedia
      */
 
     // 取得玩家可見的遊戲紀錄（含 public）
-    public function getGameLogs()
+    public function getGameLogs(int $limit = 100)
     {
-        return $this->game->game_logs()
-            ->where(function ($q) {
-                $q->where('player_id', $this->id)
-                    ->orWhere('type', 'public');
-            })
-            ->orderBy('id', 'desc')
-            ->limit(100)
+        return $this->game_logs()
+            ->orderByDesc('created_at')
+            ->limit($limit)
             ->get();
     }
+
+
 
     // 取得玩家目前所在的地圖格子
     public function getCurrentGameLocation()

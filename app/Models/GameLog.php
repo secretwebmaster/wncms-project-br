@@ -42,6 +42,6 @@ class GameLog extends BaseModel
     //! Handle data
     public function render()
     {
-        return (new GameManager($this->game))->renderGameLog($this);
+        return (new GameManager($this->game))->renderGameLog($this, $this->player);
     }
 }

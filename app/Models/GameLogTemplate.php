@@ -30,4 +30,9 @@ class GameLogTemplate extends BaseModel
         'story',
         'event',
     ];
+
+    public function variants()
+    {
+        return $this->hasMany(GameLogTemplateVariant::class);
+    }
 }
