@@ -57,4 +57,39 @@ class Item extends BaseModel
             return is_numeric($v);
         });
     }
+
+    public function getTooltipText(): string
+    {
+        $lines = [];
+
+        $template = $this->item_template;
+
+        // Item ID
+        $lines[] = '#' . $this->id;
+
+        // Description
+        if (!empty($template?->description)) {
+            $lines[] = strip_tags($template->description);
+        }
+
+        // Stats (generic)
+        if (is_array($template?->value)) {
+            foreach ($template->value as $key => $baseValue) {
+                if ($baseValue === null || $baseValue === '') {
+                    continue;
+                }
+
+                $value = $baseValue;
+
+                // Level scaling (simple rule, adjust later if needed)
+                if (is_numeric($value) && $this->level) {
+                    $value += $this->level;
+                }
+
+                $lines[] = __('wncms::word.' . $key) . ': ' . $value;
+            }
+        }
+
+        return implode("\n", $lines);
+    }
 }

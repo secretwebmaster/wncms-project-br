@@ -73,17 +73,6 @@
     </div>
 </div>
 
-{{-- 已裝備（Slot 視圖） --}}
-@php
-    $slotIcons = [
-        'head' => 'slot_head.png',
-        'body' => 'slot_body.png',
-        'hand' => 'slot_hand.png',
-        'foot' => 'slot_foot.png',
-        'shield' => 'slot_shield.png',
-    ];
-@endphp
-
 {{-- 物品欄 --}}
 <div class="card mb-3">
     <div class="card-header border-0 px-4 py-2">
@@ -98,6 +87,7 @@
         use App\Models\ItemTemplate;
 
         $slotIcons = [
+            'weapon' => 'slot_weapon.png',
             'head' => 'slot_head.png',
             'body' => 'slot_body.png',
             'hand' => 'slot_hand.png',
@@ -108,7 +98,7 @@
 
     <div class="card-body px-4 py-2 border-bottom">
 
-        <div class="row row-cols-5 g-2">
+        <div class="row g-2">
 
             @foreach (ItemTemplate::SLOTS as $slot)
                 @php
@@ -118,7 +108,7 @@
                         ->asset($themeId, 'images/items/' . ($slotIcons[$slot] ?? 'slot_empty.png'));
                 @endphp
 
-                <div class="col" title="{{ strtoupper($slot) }}">
+                <div class="col" title="{{ $equippedItem ? $equippedItem->getTooltipText() : __('wncms::word.' . $slot) }}">
                     <div class="position-relative border rounded bg-light d-flex align-items-center justify-content-center ratio ratio-1x1">
 
                         @if ($equippedItem)
@@ -134,7 +124,7 @@
                             </span> --}}
                         @else
                             <img src="{{ $emptyIcon }}"
-                                class="img-fluid p-2 opacity-50"
+                                class="img-fluid p-2 opacity-20"
                                 alt="{{ $slot }}">
                         @endif
 
@@ -151,7 +141,10 @@
                 <li class="w-100 d-flex mb-1">
                     <div class="symbol symbol-20px d-flex align-items-center position-relative">
                         <img class="me-1" src="{{ $item->item_template?->thumbnail }}" alt="">
-                        <span class="my-tooltip-trigger" title="{{ $item->item_template?->description }}">{{ $item->item_template?->name }} @if ($item->level)
+                        <span class="my-tooltip-trigger"
+                            title="{{ e($item->getTooltipText()) }}">
+                            {{ $item->item_template?->name }}
+                            @if ($item->level)
                                 <span class="text-success fw-bold">+{{ $item->level }}</span>
                             @endif
                         </span>

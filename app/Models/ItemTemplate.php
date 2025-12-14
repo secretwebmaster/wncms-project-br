@@ -45,6 +45,7 @@ class ItemTemplate extends BaseModel implements HasMedia
     ];
 
     public const SLOTS = [
+        'weapon',
         'head',
         'body',
         'hand',
