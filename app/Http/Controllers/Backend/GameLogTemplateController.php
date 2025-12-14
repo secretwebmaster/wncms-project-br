@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Backend;
 
 use Illuminate\Http\Request;
 use Wncms\Http\Controllers\Backend\BackendController;
+use App\Services\Managers\GameLogTemplateManager;
+use App\Models\GameLogTemplate;
+use App\Models\GameLogTemplateVariant;
 
 class GameLogTemplateController extends BackendController
 {
@@ -25,7 +28,7 @@ class GameLogTemplateController extends BackendController
     public function create(int|string|null $id = null)
     {
         $gameLogTemplate = $id
-            ? $this->modelClass::find($id)
+            ? $this->modelClass::with('variants')->find($id)
             : new $this->modelClass;
 
         if ($id && !$gameLogTemplate) {
@@ -36,34 +39,33 @@ class GameLogTemplateController extends BackendController
             'page_title' => __('wncms::word.model_management', ['model_name' => __('wncms::word.game_log_template')]),
             'gameLogTemplate' => $gameLogTemplate,
             'types' => $this->modelClass::TYPES,
+            'operators' => GameLogTemplateVariant::OPERATORS,
         ]);
     }
 
     public function store(Request $request)
     {
-        $duplicated = $this->modelClass::where('key', $request->key)->first();
-        if ($duplicated) {
+        $manager = app(GameLogTemplateManager::class);
+
+        // check duplicate key 
+        if ($this->modelClass::where('key', $request->key)->exists()) {
             return back()->withErrors([
-                'message' => __('wncms::word.duplocate_template_is_found', ['id' => $duplicated->id]),
+                'message' => __('wncms::word.duplocate_template_is_found'),
             ]);
         }
 
-        $gameLogTemplate = $this->modelClass::create([
-            'type' => $request->type,
-            'key' => $request->key,
-            'remark' => $request->remark,
-            'content' => $request->content,
-        ]);
+        $template = $manager->save($request->all());
 
         $this->flush();
 
-        return redirect()->route('game_log_templates.edit', ['id' => $gameLogTemplate->id])
+        return redirect()->route('game_log_templates.edit', ['id' => $template->id])
             ->withMessage(__('wncms::word.successfully_created'));
     }
 
     public function edit($id)
     {
-        $gameLogTemplate = $this->modelClass::find($id);
+        $gameLogTemplate = $this->modelClass::with('variants')->find($id);
+
         if (!$gameLogTemplate) {
             return back()->withMessage(__('wncms::word.model_not_found', ['model_name' => __('wncms::word.game_log_template')]));
         }
@@ -72,26 +74,30 @@ class GameLogTemplateController extends BackendController
             'page_title' => __('wncms::word.model_management', ['model_name' => __('wncms::word.game_log_template')]),
             'gameLogTemplate' => $gameLogTemplate,
             'types' => $this->modelClass::TYPES,
+            'operators' => GameLogTemplateVariant::OPERATORS,
         ]);
     }
 
     public function update(Request $request, $id)
     {
-        $gameLogTemplate = $this->modelClass::find($id);
-        if (!$gameLogTemplate) {
-            return back()->withMessage(__('wncms::word.model_not_found', ['model_name' => __('wncms::word.game_log_template')]));
+        // dd($request->all());
+        $manager = app(GameLogTemplateManager::class);
+
+        $template = $this->modelClass::find($id);
+        if (!$template) {
+            return back()->withMessage(__('wncms::word.model_not_found', [
+                'model_name' => __('wncms::word.game_log_template'),
+            ]));
         }
 
-        $gameLogTemplate->update([
-            'type' => $request->type,
-            'key' => $request->key,
-            'remark' => $request->remark,
-            'content' => $request->content,
-        ]);
+        $manager->save(array_merge(
+            $request->all(),
+            ['id' => $template->id]
+        ));
 
         $this->flush();
 
-        return redirect()->route('game_log_templates.edit', ['id' => $gameLogTemplate->id])
+        return redirect()->route('game_log_templates.edit', ['id' => $template->id])
             ->withMessage(__('wncms::word.successfully_updated'));
     }
 }
