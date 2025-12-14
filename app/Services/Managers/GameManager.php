@@ -96,7 +96,7 @@ class GameManager
         return $this->game->items()->location($x, $y)->get();
     }
 
-    public function getOhterPlayerOnTile($player)
+    public function getOtherPlayerOnTile($player)
     {
         return $this->game->players()->where('id', '<>', $player->id)->location($player->location_x, $player->location_y)->get();
     }
@@ -222,10 +222,14 @@ class GameManager
     {
         $gameLogTemplate = GameLogTemplate::where('key', $key)->first();
 
+        info("Logging game log for player {$player->id} with key {$key}");
+
         if (!$gameLogTemplate) {
             info("GameLogTemplate not found for key: {$key}");
             return false;
         }
+
+        info($gameLogTemplate);
 
         $gameLog = $player->game_logs()->create([
             'game_id' => $this->game->id,
@@ -233,18 +237,31 @@ class GameManager
             'data' => $data,
         ]);
 
+        info($gameLog);
+
         return $gameLog;
     }
 
-    public function renderGameLog(GameLog $gameLog)
+    public function renderGameLog(GameLog $gameLog, Player $viewer)
     {
-        $content = $gameLog->game_log_template?->content;
+        $template = $gameLog->game_log_template;
+        if (!$template) return '';
+
+        $data = $gameLog->data ?? [];
+
+        $viewerRole = $this->detectViewerRole($gameLog, $viewer);
+
+        $data['viewer_role'] = $viewerRole;
+
+        $variant = $this->pickVariant($template, $data);
+
+        $content = $variant?->content ?? $template->content;
+
         $data = $gameLog->data;
         $pattern = '/\[keyword ([^\]]+)\]/';
 
-
         // Use the preg_replace_callback function to replace the placeholders
-        $parsedContent = preg_replace_callback($pattern, function ($match) use ($data) {
+        $parsedContent = preg_replace_callback($pattern, function ($match) use ($data, $viewer) {
 
             if (!empty($match[1])) {
                 $params = [];
@@ -291,8 +308,17 @@ class GameManager
                         }
                     } else {
                         if (!empty($data[$dataKey])) {
-                            $value = $modelClass::where($modelColumn, $data[$dataKey])
-                                ->value($outputColumn);
+
+                            // viewer-aware "you"
+                            if (
+                                $params['m'] === 'player' &&
+                                (int) $data[$dataKey] === (int) $viewer->id
+                            ) {
+                                $value = __('wncms::word.you');
+                            } else {
+                                $value = $modelClass::where($modelColumn, $data[$dataKey])
+                                    ->value($outputColumn);
+                            }
                         } else {
                             $value = '未知資料';
                         }
@@ -310,7 +336,74 @@ class GameManager
             return $match[0];
         }, $content);
 
-
         return $parsedContent;
+    }
+
+    protected function pickVariant(GameLogTemplate $template, array $data): ?object
+    {
+        return $template->variants
+            ->where('is_active', 1)
+            ->filter(fn($variant) => $this->matchConditionTree($variant->conditions, $data))
+            ->sortByDesc('priority')
+            ->first();
+    }
+
+    protected function matchConditionTree(?array $node, array $data): bool
+    {
+        if (!$node) return false;
+
+        // leaf
+        if (isset($node['field'])) {
+            $left = $data[$node['field']] ?? null;
+            $right = $node['value'] ?? null;
+            $op = $node['operator'] ?? '=';
+
+            return match ($op) {
+                '='  => $left == $right,
+                '!=' => $left != $right,
+                '>'  => $left >  $right,
+                '>=' => $left >= $right,
+                '<'  => $left <  $right,
+                '<=' => $left <= $right,
+                'in' => is_array($right) && in_array($left, $right),
+                'not_in' => is_array($right) && !in_array($left, $right),
+                default => false,
+            };
+        }
+
+        // group
+        $type = $node['type'] ?? 'and';
+        $children = $node['children'] ?? [];
+
+        if ($type === 'and') {
+            foreach ($children as $child) {
+                if (!$this->matchConditionTree($child, $data)) return false;
+            }
+            return true;
+        }
+
+        if ($type === 'or') {
+            foreach ($children as $child) {
+                if ($this->matchConditionTree($child, $data)) return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+
+    protected function detectViewerRole(GameLog $gameLog, Player $viewer): string
+    {
+        $data = $gameLog->data ?? [];
+
+        if (!empty($data['attacker_id']) && (int) $data['attacker_id'] === (int) $viewer->id) {
+            return 'attacker';
+        }
+
+        if (!empty($data['defender_id']) && (int) $data['defender_id'] === (int) $viewer->id) {
+            return 'defender';
+        }
+
+        return 'other';
     }
 }
