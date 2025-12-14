@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Frontend;
 
-
+use App\Services\Managers\PlayerManager;
 use Illuminate\Http\Request;
 use Wncms\Http\Controllers\Frontend\FrontendController;
 use App\Traits\GameTraits;
@@ -36,7 +36,7 @@ class PlayerController extends FrontendController
         info("Found " . $tileItems->count() . " tileItems");
 
         //check if there are other players
-        $otherPlayers = $this->gm->getOhterPlayerOnTile($this->player);
+        $otherPlayers = $this->gm->getOtherPlayerOnTile($this->player);
         if ($otherPlayers->count()) {
             //pick one
             $randomPlayer = $otherPlayers->random(1)->first();
@@ -98,6 +98,8 @@ class PlayerController extends FrontendController
 
         //get action
         $action = $this->player->actions()->find($request->actionId);
+        // info($action);
+
         if (!$action) {
             return response()->json([
                 'status' => 'fail',
@@ -105,15 +107,13 @@ class PlayerController extends FrontendController
             ]);
         }
 
-        // info($action);
+        if ($action->status !== 'pending') {
+            return response()->json([
+                'status' => 'fail',
+                'message' => 'action already processed',
+            ]);
+        }
 
-        //update action
-        $action->update([
-            'status' => 'completed',
-            'decision' => $request->decision,
-        ]);
-
-        //!update effect
         //update item
         if ($action->type == 'item') {
             if ($request->decision == 'pick') {
@@ -180,72 +180,45 @@ class PlayerController extends FrontendController
                 ]);
             }
 
-            // ===== damage roll calculation =====
+            $playerManager = app(PlayerManager::class);
 
-            // base attack power
-            $basePower = (int) $this->player->final_str;
-            $flatAtk = (int) $this->player->final_atk;
+            $result = $playerManager->attack(
+                $this->player,
+                $target,
+                $snapshot
+            );
 
-            // 隨機浮動（±20%）
-            $variance = rand(-20, 20) / 100;
-
-            // 血量影響（血越低，輸出越弱）
-            $hpRatio = $this->player->hp / max(1, $this->player->final_max_hp);
-            $hpFactor = max(0.5, $hpRatio); // 最低 50%
-
-            // raw damage before defense
-            $rawDamage = ($basePower + $flatAtk) * (1 + $variance) * $hpFactor;
-
-            // defense
-            $defense = floor($target->final_vit / 2) + (int) $target->final_def;
-
-            // final damage
-            $damage = max(1, (int) ($rawDamage - $defense));
-
-            // critical hit
-            $critChance = min(30, ($this->player->final_luc * 2) + (int) $this->player->final_crit);
-            $isCrit = rand(1, 100) <= $critChance;
-
-            if ($isCrit) {
-                $damage = (int) ($damage * 2);
-            }
-
-
-
-            // ===== apply damage =====
-            $hpBefore = $target->hp;
-            $hpAfter = max(0, $hpBefore - $damage);
-
-            $target->update([
-                'hp' => $hpAfter,
-                'status' => $hpAfter <= 0 ? 'dead' : 'alive',
-                'died_at' => $hpAfter <= 0 ? now() : null,
-            ]);
-
-            // log
-            $this->gm->log($this->player, 'player_attack_player', [
+            $logData = [
                 'attacker_id' => $this->player->id,
                 'defender_id' => $target->id,
-                'damage' => $damage,
-                'defender_hp' => $hpAfter,
-                'killed' => $hpAfter <= 0,
+                'damage'      => $result['damage'],
+                'defender_hp' => $result['hp_after'],
+                'killed'      => $result['killed'],
+                'is_critical' => $result['is_critical'] ? 1 : 0,
+                'hp_before'   => $result['hp_before'],
+                'hp_after'    => $result['hp_after'],
+                'x'           => $snapshot['location_x'],
+                'y'           => $snapshot['location_y'],
+            ];
 
-                'is_critical' => $isCrit ? 1 : 0,
-                'hp_before' => $hpBefore,
-                'hp_after' => $hpAfter,
-                'x' => $snapshot['location_x'],
-                'y' => $snapshot['location_y'],
-            ]);
+            info("Attack result: " . print_r($logData, true));
 
-            if ($hpAfter <= 0) {
-                $this->player->increment('kill');
+            // log attack
+            $this->gm->log($this->player, 'player_attack_player', $logData);
 
+            if ($result['killed']) {
                 $this->gm->log($this->player, 'player_killed_player', [
-                    'player_id' => $this->player->id,
+                    'player_id'       => $this->player->id,
                     'other_player_id' => $target->id,
                 ]);
             }
         }
+
+        //update action
+        $action->update([
+            'status' => 'completed',
+            'decision' => $request->decision,
+        ]);
 
         //render view
         $mapView = $this->renderMap();
