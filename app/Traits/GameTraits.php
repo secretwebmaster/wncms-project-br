@@ -49,24 +49,13 @@ trait GameTraits
 
     public function renderEvent()
     {
-        $gameLogs = $this->player
-            ->game_logs()
-            ->with(['game_log_template', 'game_log_template.variants'])
-            ->orderByDesc('created_at')
-            ->get();
-
-        $gm = $this->gm;
-        $viewer = $this->player;
+        $gameLogs = $this->player->getGameLogs();
 
         return $this->view("{$this->theme}::parts.event", [
             'game_logs' => $gameLogs,
-            'renderGameLog' => function ($gameLog) use ($gm, $viewer) {
-                return $gm->renderGameLog($gameLog, $viewer);
-            },
+            'player' => $this->player,
         ])->render();
     }
-
-
 
     public function renderAction()
     {
