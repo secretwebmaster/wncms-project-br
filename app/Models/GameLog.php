@@ -40,8 +40,10 @@ class GameLog extends BaseModel
     }
 
     //! Handle data
-    public function render()
+    public function render(Player $viewerPlayer)
     {
-        return (new GameManager($this->game))->renderGameLog($this, $this->player);
+        $gm = new GameManager($this->game, $viewerPlayer);
+
+        return $gm->renderGameLog($this, $viewerPlayer);
     }
 }

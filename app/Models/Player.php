@@ -124,14 +124,32 @@ class Player extends BaseModel implements HasMedia
      * --------------------------------------------------------------------------
      */
 
-    // 取得玩家可見的遊戲紀錄（含 public）
+    // 遊戲事件紀錄（作為行動者）
+    public function actor_game_logs()
+    {
+        return $this->hasMany(GameLog::class, 'actor_player_id');
+    }
+
+    // 遊戲事件紀錄（作為目標）
+    public function target_game_logs()
+    {
+        return $this->hasMany(GameLog::class, 'target_player_id');
+    }
+
+    // 取得玩家可見的遊戲紀錄（actor or target）
     public function getGameLogs(int $limit = 100)
     {
-        return $this->game_logs()
+        return GameLog::query()
+            ->where('game_id', $this->game_id)
+            ->where(function ($q) {
+                $q->where('actor_player_id', $this->id)
+                    ->orWhere('target_player_id', $this->id);
+            })
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get();
     }
+
 
 
 

@@ -31,7 +31,7 @@ class GameLogTemplateVariant extends BaseModel
         'not_in' => 'NOT IN',
     ];
 
-    public function template()
+    public function game_log_template()
     {
         return $this->belongsTo(GameLogTemplate::class);
     }

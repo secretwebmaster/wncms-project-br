@@ -208,10 +208,10 @@ namespace App\Models{
  * @property string|null $remark
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\GameLogTemplate $game_log_template
  * @property-read mixed $website
  * @property \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Tag> $tags
  * @property-read int|null $tags_count
- * @property-read \App\Models\GameLogTemplate|null $template
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Translatable\Models\Translation> $translations
  * @property-read int|null $translations_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Website> $websites
@@ -490,6 +490,8 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PlayerAction> $actions
  * @property-read int|null $actions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GameLog> $actor_game_logs
+ * @property-read int|null $actor_game_logs_count
  * @property-read \App\Models\Game $game
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GameLog> $game_logs
  * @property-read int|null $game_logs_count
@@ -511,6 +513,8 @@ namespace App\Models{
  * @property-read int|null $media_count
  * @property \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Tag> $tags
  * @property-read int|null $tags_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\GameLog> $target_game_logs
+ * @property-read int|null $target_game_logs_count
  * @property-read \Wncms\Models\User|null $user
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Wncms\Models\Website> $websites
  * @property-read int|null $websites_count
