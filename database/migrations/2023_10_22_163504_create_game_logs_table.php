@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('game_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('game_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('player_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('actor_player_id')->nullable()->index();
+            // $table->foreignId('player_id')->nullable()->constrained()->cascadeOnDelete(); removed
+            $table->foreignId('target_player_id')->nullable()->index();
             $table->foreignId('game_log_template_id')->nullable()->constrained()->nullOnDelete();
             $table->json('data');
             $table->timestamps();
