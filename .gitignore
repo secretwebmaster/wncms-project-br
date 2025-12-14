@@ -43,3 +43,4 @@ Todo.md
 
 /storage/*
 !/storage/.gitignore
+diff.txt
