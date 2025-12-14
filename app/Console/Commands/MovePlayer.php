@@ -76,7 +76,7 @@ class MovePlayer extends Command
         }
 
         // Detect other players on tile
-        $others = $gm->getOhterPlayerOnTile($player);
+        $others = $gm->getOtherPlayerOnTile($player);
         if ($others->isNotEmpty()) {
             $this->info("Other players on tile: " . $others->count());
         }

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Backend;
 
 use App\Models\Game;
 use App\Models\Player;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Wncms\Http\Controllers\Backend\BackendController;
@@ -15,7 +14,26 @@ class PlayerController extends BackendController
 
     public function index(Request $request)
     {
-        $players = $this->modelClass::query()->orderBy('id', 'desc')->get();
+        $q = $this->modelClass::query();
+
+        if($request->game_id){
+            $q->where('game_id', $request->game_id);
+        }
+
+        if($request->status){
+            $q->where('status', $request->status);
+        }
+
+        if($request->keyword){
+            $q->where('name', 'like', '%' . $request->keyword . '%');
+        }
+        
+        $q->with(['user', 'game']);
+
+        $q->orderBy('id', 'desc');
+        
+        $players = $q->paginate($request->page_size ?? 100);
+
         $gameIds = Game::pluck('id')->toArray();
 
         return $this->view('backend.players.index', [
@@ -94,7 +112,7 @@ class PlayerController extends BackendController
             'page_title' => __('wncms::word.model_management', ['model_name' => __('wncms::word.player')]),
             'player' => $player,
             'gameIds' => Game::pluck('id')->toArray(),
-            'users' => User::all(),
+            'users' => wncms()->getModelClass('user')::all(),
             'statuses' => Player::STATUSES,
             'types' => Player::TYPES,
         ]);
